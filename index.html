@@ -253,8 +253,10 @@
       }
 
       .bot-trap {
-        display: none;
-        visibility: hidden;
+        display: none !important;
+        visibility: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
       }
 
       .toast {
@@ -292,8 +294,9 @@
     </style>
   </head>
   <body>
-    <!-- Honeypot Bot Trap -->
+    <!-- Multi-Honeypot Traps for Bots -->
     <input type="text" name="website_hp" id="bot-honeypot" class="bot-trap" tabindex="-1" autocomplete="off" />
+    <input type="email" name="user_email_hp" id="bot-email-honeypot" class="bot-trap" tabindex="-1" autocomplete="off" />
 
     <main class="landing-shell">
       <article class="poster">
@@ -379,54 +382,87 @@
         }, 7000);
       })();
 
-      (function initAntiFakeClick() {
+      // HIGH % ANTI-FAKE-CLICK & BOT CONTROL SYSTEM
+      (function initHighPercentageAntiFakeClick() {
         const ctaBtn = document.getElementById('cta-button');
         const ctaText = document.getElementById('cta-text');
-        const honeypot = document.getElementById('bot-honeypot');
+        const hp1 = document.getElementById('bot-honeypot');
+        const hp2 = document.getElementById('bot-email-honeypot');
 
+        let humanActivityScore = 0;
+        let pageStartTime = Date.now();
         let lastClickTime = 0;
-        let userMovedMouse = false;
-        const MAX_CLICKS_PER_SESSION = 5;
-        const COOLDOWN_MS = 1500;
 
-        window.addEventListener('mousemove', function onFirstMove() {
-          userMovedMouse = true;
-          window.removeEventListener('mousemove', onFirstMove);
-        });
+        // Track Human Movement Behavior
+        window.addEventListener('mousemove', () => { humanActivityScore += 2; }, { passive: true });
+        window.addEventListener('touchstart', () => { humanActivityScore += 5; }, { passive: true });
+        window.addEventListener('scroll', () => { humanActivityScore += 1; }, { passive: true });
+
+        // Advanced Automated Tool Detector
+        function isBotDetected() {
+          const nav = navigator;
+          const win = window;
+
+          // Detect Automated Browsers (Selenium, Puppeteer, Playwright)
+          if (nav.webdriver) return true;
+          if (win.document.documentElement.getAttribute("webdriver")) return true;
+          if (win.callPhantom || win._phantom || win.__nightmare) return true;
+          if (win.domAutomation || win.domAutomationController) return true;
+
+          // Headless Browser Pattern Check
+          if (/HeadlessChrome/.test(nav.userAgent)) return true;
+
+          // Honeypot Field Check
+          if ((hp1 && hp1.value !== "") || (hp2 && hp2.value !== "")) return true;
+
+          return false;
+        }
 
         ctaBtn.addEventListener('click', function(e) {
           const now = Date.now();
+          const durationOnPage = now - pageStartTime;
 
-          if (honeypot && honeypot.value !== "") {
+          // 1. Block Automated Scripts & Headless Browsers
+          if (isBotDetected()) {
             e.preventDefault();
             return false;
           }
 
+          // 2. Event Authenticity Check
           if (!e.isTrusted) {
             e.preventDefault();
             return false;
           }
 
-          if (window.innerWidth > 768 && !userMovedMouse && e.clientX === 0 && e.clientY === 0) {
+          // 3. Ultra-Fast Click Protection (Click under 500ms is bot activity)
+          if (durationOnPage < 500) {
             e.preventDefault();
             return false;
           }
 
-          if (now - lastClickTime < COOLDOWN_MS) {
+          // 4. Zero Human Movement Check (Only for desktop screens)
+          if (window.innerWidth > 768 && humanActivityScore < 1) {
             e.preventDefault();
             return false;
           }
 
+          // 5. Cooldown Protection (1.8s delay between rapid clicks)
+          if (now - lastClickTime < 1800) {
+            e.preventDefault();
+            return false;
+          }
+
+          // 6. Strict Rate Limiting (Max 3 clicks per session)
           let sessionClicks = parseInt(sessionStorage.getItem('user_click_count') || '0', 10);
-          if (sessionClicks >= MAX_CLICKS_PER_SESSION) {
+          if (sessionClicks >= 3) {
             e.preventDefault();
-            alert("Rate limit exceeded! Please wait before attempting again.");
+            alert("Rate limit exceeded! Please wait before trying again.");
             ctaBtn.classList.add('btn-disabled');
             ctaText.textContent = "PLEASE WAIT...";
             return false;
           }
 
-          // Trigger Meta Pixel Lead Event on button click
+          // Trigger Meta Pixel Lead Event for Valid Human Clicks Only
           if (typeof fbq === 'function') {
             fbq('track', 'Lead');
           }
@@ -439,11 +475,11 @@
           ctaText.textContent = "REDIRECTING...";
 
           setTimeout(() => {
-            if (sessionClicks < MAX_CLICKS_PER_SESSION) {
+            if (sessionClicks < 3) {
               ctaBtn.classList.remove('btn-disabled');
               ctaText.textContent = "JOIN TELEGRAM NOW";
             }
-          }, COOLDOWN_MS);
+          }, 1800);
         });
       })();
     </script>
