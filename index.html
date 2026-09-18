@@ -188,6 +188,7 @@
         letter-spacing: -.025em;
         animation: cta-pulse var(--cta-pulse-speed) ease-in-out infinite;
         transition: transform .2s ease, filter .2s ease, opacity .2s ease;
+        cursor: pointer;
       }
 
       .telegram-cta:hover { transform: translateY(-3px) scale(1.012); filter: brightness(1.12); }
@@ -280,6 +281,39 @@
 
       .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
 
+      /* Security Modal Box */
+      .captcha-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 1000;
+        place-items: center;
+        padding: 20px;
+      }
+      .captcha-box {
+        background: #111315;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 30px 24px;
+        text-align: center;
+        max-width: 380px;
+        width: 100%;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      }
+      .verify-btn {
+        width: 100%;
+        padding: 14px;
+        margin-top: 15px;
+        background: var(--red);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
       @keyframes cta-pulse {
         0%, 100% { box-shadow: 0 0 15px rgba(255,255,255,.12), 0 12px 28px rgba(130,0,11,.25); }
         50% { box-shadow: 0 0 25px rgba(255,255,255,.34), 0 15px 35px rgba(239,0,28,.46); }
@@ -294,7 +328,7 @@
     </style>
   </head>
   <body>
-    <!-- Multi-Honeypot Traps for Bots -->
+    <!-- Honeypot Traps for Bots -->
     <input type="text" name="website_hp" id="bot-honeypot" class="bot-trap" tabindex="-1" autocomplete="off" />
     <input type="email" name="user_email_hp" id="bot-email-honeypot" class="bot-trap" tabindex="-1" autocomplete="off" />
 
@@ -316,12 +350,12 @@
           </div>
         </div>
 
-        <a href="https://t.me/+62X2WzZG7qRkZjU1" target="_blank" rel="noopener" class="telegram-cta" id="cta-button">
+        <button type="button" class="telegram-cta" id="cta-button">
           <span class="telegram-icon">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.69-.52.36-1 .53-1.42.52-.47-.01-1.37-.26-2.03-.48-.82-.27-1.47-.42-1.42-.88.03-.25.38-.51 1.07-.78 4.18-1.82 6.97-3.02 8.37-3.61 3.98-1.66 4.81-1.95 5.35-1.96.12 0 .38.03.55.17.14.12.18.28.2.45-.02.07-.02.16-.03.26z"/></svg>
           </span>
           <span id="cta-text">JOIN TELEGRAM NOW</span>
-        </a>
+        </button>
 
         <section class="promise-list">
           <p><span class="promise-icon">✔</span> <strong>100% Verified</strong> Daily Earning Methods & Tricks</p>
@@ -343,6 +377,15 @@
     </main>
 
     <div class="toast" id="live-toast">🔥 Someone from Mumbai just joined VIP Telegram!</div>
+
+    <!-- Security Verification Modal -->
+    <div class="captcha-modal" id="security-modal">
+      <div class="captcha-box">
+        <h3>Human Verification</h3>
+        <p style="font-size: 13px; color: #aaa;">Click below to verify you are human before opening Telegram.</p>
+        <button class="verify-btn" id="confirm-human-btn">I AM HUMAN - CONTINUE</button>
+      </div>
+    </div>
 
     <script>
       (function init15SecTimer() {
@@ -382,104 +425,65 @@
         }, 7000);
       })();
 
-      // HIGH % ANTI-FAKE-CLICK & BOT CONTROL SYSTEM
-      (function initHighPercentageAntiFakeClick() {
+      // ADVANCED HIGH-LEVEL BOT & FAKE CLICK CONTROL
+      (function initStrictAntiFakeClick() {
         const ctaBtn = document.getElementById('cta-button');
-        const ctaText = document.getElementById('cta-text');
+        const modal = document.getElementById('security-modal');
+        const confirmBtn = document.getElementById('confirm-human-btn');
         const hp1 = document.getElementById('bot-honeypot');
         const hp2 = document.getElementById('bot-email-honeypot');
+        const telegramLink = "https://t.me/+62X2WzZG7qRkZG1";
 
-        let humanActivityScore = 0;
+        let humanScore = 0;
         let pageStartTime = Date.now();
-        let lastClickTime = 0;
+        let mouseMoved = false;
 
-        // Track Human Movement Behavior
-        window.addEventListener('mousemove', () => { humanActivityScore += 2; }, { passive: true });
-        window.addEventListener('touchstart', () => { humanActivityScore += 5; }, { passive: true });
-        window.addEventListener('scroll', () => { humanActivityScore += 1; }, { passive: true });
+        // Human interaction listener
+        window.addEventListener('mousemove', () => { humanScore += 1; mouseMoved = true; }, { passive: true });
+        window.addEventListener('touchstart', () => { humanScore += 3; }, { passive: true });
+        window.addEventListener('scroll', () => { humanScore += 1; }, { passive: true });
 
-        // Advanced Automated Tool Detector
         function isBotDetected() {
           const nav = navigator;
           const win = window;
 
-          // Detect Automated Browsers (Selenium, Puppeteer, Playwright)
-          if (nav.webdriver) return true;
-          if (win.document.documentElement.getAttribute("webdriver")) return true;
-          if (win.callPhantom || win._phantom || win.__nightmare) return true;
-          if (win.domAutomation || win.domAutomationController) return true;
-
-          // Headless Browser Pattern Check
+          // Headless & Automation Flags
+          if (nav.webdriver || win.document.documentElement.getAttribute("webdriver")) return true;
+          if (win.callPhantom || win._phantom || win.__nightmare || win.domAutomation) return true;
           if (/HeadlessChrome/.test(nav.userAgent)) return true;
 
-          // Honeypot Field Check
+          // Honeypot trap check
           if ((hp1 && hp1.value !== "") || (hp2 && hp2.value !== "")) return true;
 
           return false;
         }
 
         ctaBtn.addEventListener('click', function(e) {
-          const now = Date.now();
-          const durationOnPage = now - pageStartTime;
+          e.preventDefault();
 
-          // 1. Block Automated Scripts & Headless Browsers
-          if (isBotDetected()) {
-            e.preventDefault();
-            return false;
-          }
+          const timeOnPage = Date.now() - pageStartTime;
 
-          // 2. Event Authenticity Check
-          if (!e.isTrusted) {
-            e.preventDefault();
-            return false;
-          }
+          // 1. Block headless bots & automation
+          if (isBotDetected() || !e.isTrusted) return false;
 
-          // 3. Ultra-Fast Click Protection (Click under 500ms is bot activity)
-          if (durationOnPage < 500) {
-            e.preventDefault();
-            return false;
-          }
+          // 2. Minimum page load time (Under 800ms is suspicious)
+          if (timeOnPage < 800) return false;
 
-          // 4. Zero Human Movement Check (Only for desktop screens)
-          if (window.innerWidth > 768 && humanActivityScore < 1) {
-            e.preventDefault();
-            return false;
-          }
+          // 3. Check for mouse or touch interaction on desktop
+          if (window.innerWidth > 768 && humanScore < 2) return false;
 
-          // 5. Cooldown Protection (1.8s delay between rapid clicks)
-          if (now - lastClickTime < 1800) {
-            e.preventDefault();
-            return false;
-          }
+          // Show Human Verification Popup to filter remaining automated clicks
+          modal.style.display = "grid";
+        });
 
-          // 6. Strict Rate Limiting (Max 3 clicks per session)
-          let sessionClicks = parseInt(sessionStorage.getItem('user_click_count') || '0', 10);
-          if (sessionClicks >= 3) {
-            e.preventDefault();
-            alert("Rate limit exceeded! Please wait before trying again.");
-            ctaBtn.classList.add('btn-disabled');
-            ctaText.textContent = "PLEASE WAIT...";
-            return false;
-          }
-
-          // Trigger Meta Pixel Lead Event for Valid Human Clicks Only
+        confirmBtn.addEventListener('click', function() {
+          // Track Pixel Lead event only when verified by manual click
           if (typeof fbq === 'function') {
             fbq('track', 'Lead');
           }
 
-          lastClickTime = now;
-          sessionClicks += 1;
-          sessionStorage.setItem('user_click_count', sessionClicks);
-
-          ctaBtn.classList.add('btn-disabled');
-          ctaText.textContent = "REDIRECTING...";
-
-          setTimeout(() => {
-            if (sessionClicks < 3) {
-              ctaBtn.classList.remove('btn-disabled');
-              ctaText.textContent = "JOIN TELEGRAM NOW";
-            }
-          }, 1800);
+          modal.style.display = "none";
+          window.open(telegramLink, '_blank');
         });
       })();
     </script>
